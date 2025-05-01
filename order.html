@@ -7,9 +7,36 @@
 </head>
 <body>
   <h2>線上點餐系統</h2>
-  <label>桌號: <input type="text" id="table" value="1"></label><br>
-  <label>餐點: <input type="text" id="food" value="雞腿飯"></label><br>
-  <label>數量: <input type="number" id="qty" value="1"></label><br>
+  <label>桌號:
+    <select id="table">
+      <option value="1">1號桌</option>
+      <option value="2">2號桌</option>
+      <option value="3">3號桌</option>
+      <option value="4">4號桌</option>
+      <option value="5">5號桌</option>
+    </select>
+  </label>
+  <br>
+  <label>餐點:
+    <select id="food">
+      <option value="雞腿飯">雞腿飯</option>
+      <option value="排骨飯">排骨飯</option>
+      <option value="燒肉飯">燒肉飯</option>
+      <option value="滷肉飯">滷肉飯</option>
+      <option value="炒飯">炒飯</option>
+    </select>
+  </label>
+  <br>
+  <label>數量:
+    <select id="qty">
+      <option value="1">1份</option>
+      <option value="2">2份</option>
+      <option value="3">3份</option>
+      <option value="4">4份</option>
+      <option value="5">5份</option>
+    </select>
+  </label>
+  <br>
   <button onclick="sendOrder()">送出訂單</button>
   <script>
     // 連到 EMQX WebSocket broker
