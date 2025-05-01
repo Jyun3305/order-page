@@ -12,7 +12,12 @@
   <button onclick="sendOrder()">送出訂單</button>
   <script>
     // 連到 EMQX WebSocket broker
-    const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
+    // 連接到 MQTT broker，帶入唯一 clientId
+const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt', {
+  clientId: 'WebOrder-' + Math.random().toString(16).substr(2, 8),
+  clean: true
+});
+
     function sendOrder() {
       const order = {
         table: document.getElementById('table').value,
