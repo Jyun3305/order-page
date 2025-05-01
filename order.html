@@ -3,42 +3,126 @@
 <head>
   <meta charset="utf-8">
   <title>線上點餐系統</title>
-  <!-- 只要這一行，完全不要有 <script src="mqtt.min.js"></script> -->
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <style>
+    body {
+      background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+      font-family: 'Segoe UI', '微軟正黑體', Arial, sans-serif;
+      color: #333;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+    }
+    .container {
+      background: #fff;
+      margin-top: 40px;
+      padding: 32px 36px 24px 36px;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+      min-width: 320px;
+      animation: fadeIn 1.2s;
+    }
+    h2 {
+      text-align: center;
+      font-size: 2.2em;
+      margin-bottom: 28px;
+      letter-spacing: 2px;
+      color: #ff6347;
+      animation: slideDown 1s;
+    }
+    label {
+      display: block;
+      margin-bottom: 18px;
+      font-size: 1.08em;
+      letter-spacing: 1px;
+      transition: color 0.3s;
+    }
+    select {
+      margin-left: 10px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 1em;
+      transition: border 0.3s, box-shadow 0.3s;
+    }
+    select:focus, select:hover {
+      border: 1.5px solid #ff6347;
+      box-shadow: 0 0 8px #ff634733;
+      outline: none;
+    }
+    button {
+      width: 100%;
+      padding: 12px 0;
+      margin-top: 10px;
+      background: linear-gradient(90deg, #ff9966 0%, #ff5e62 100%);
+      color: #fff;
+      font-size: 1.15em;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(255,99,71,0.08);
+      transition: background 0.3s, transform 0.2s;
+      font-weight: bold;
+      letter-spacing: 1px;
+      animation: buttonPop 1.5s;
+    }
+    button:hover {
+      background: linear-gradient(90deg, #ff5e62 0%, #ff9966 100%);
+      transform: scale(1.04);
+      box-shadow: 0 4px 16px rgba(255,99,71,0.18);
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(30px);}
+      to { opacity: 1; transform: translateY(0);}
+    }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-40px);}
+      to { opacity: 1; transform: translateY(0);}
+    }
+    @keyframes buttonPop {
+      0% { transform: scale(0.7);}
+      60% { transform: scale(1.08);}
+      100% { transform: scale(1);}
+    }
+  </style>
 </head>
 <body>
-  <h2>線上點餐系統</h2>
-  <label>桌號:
-    <select id="table">
-      <option value="1">1號桌</option>
-      <option value="2">2號桌</option>
-      <option value="3">3號桌</option>
-      <option value="4">4號桌</option>
-      <option value="5">5號桌</option>
-    </select>
-  </label>
-  <br>
-  <label>餐點:
-    <select id="food">
-      <option value="雞腿飯">雞腿飯</option>
-      <option value="排骨飯">排骨飯</option>
-      <option value="燒肉飯">燒肉飯</option>
-      <option value="滷肉飯">滷肉飯</option>
-      <option value="炒飯">炒飯</option>
-    </select>
-  </label>
-  <br>
-  <label>數量:
-    <select id="qty">
-      <option value="1">1份</option>
-      <option value="2">2份</option>
-      <option value="3">3份</option>
-      <option value="4">4份</option>
-      <option value="5">5份</option>
-    </select>
-  </label>
-  <br>
-  <button onclick="sendOrder()">送出訂單</button>
+  <div class="container">
+    <h2>線上點餐系統</h2>
+    <form onsubmit="sendOrder(); return false;">
+      <label>桌號:
+        <select id="table">
+          <option value="1">1號桌</option>
+          <option value="2">2號桌</option>
+          <option value="3">3號桌</option>
+          <option value="4">4號桌</option>
+          <option value="5">5號桌</option>
+        </select>
+      </label>
+      <label>餐點:
+        <select id="food">
+          <option value="雞腿飯">雞腿飯</option>
+          <option value="排骨飯">排骨飯</option>
+          <option value="燒肉飯">燒肉飯</option>
+          <option value="滷肉飯">滷肉飯</option>
+          <option value="炒飯">炒飯</option>
+        </select>
+      </label>
+      <label>數量:
+        <select id="qty">
+          <option value="1">1份</option>
+          <option value="2">2份</option>
+          <option value="3">3份</option>
+          <option value="4">4份</option>
+          <option value="5">5份</option>
+        </select>
+      </label>
+      <button type="submit">送出訂單</button>
+    </form>
+  </div>
   <script>
     // 連接到 MQTT broker，帶入唯一 clientId
     const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt', {
@@ -48,7 +132,6 @@
 
     // Debug: 連線狀態提示
     client.on('connect', function() {
-      alert('已連接到 MQTT broker');
       console.log('已連接到 MQTT broker');
     });
     client.on('error', function(err) {
