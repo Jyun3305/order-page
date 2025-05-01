@@ -7,7 +7,7 @@
 <body>
   <h2>點餐系統</h2>
   <label>桌號: <input type="text" id="table" value="1"></label><br>
-  <label>餐點: <input type="text" id="food" value="雞腿飯"></label><br>
+  <label>餐點: <input type="text" id="food" value="1"></label><br>
   <label>數量: <input type="number" id="qty" value="1"></label><br>
   <button onclick="sendOrder()">送出訂單</button>
   <script>
