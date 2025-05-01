@@ -39,8 +39,28 @@
   <br>
   <button onclick="sendOrder()">送出訂單</button>
   <script>
-    // 連到 EMQX WebSocket broker
-    const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
+    // 連接到 MQTT broker，帶入唯一 clientId
+    const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt', {
+      clientId: 'WebOrder-' + Math.random().toString(16).substr(2, 8),
+      clean: true
+    });
+
+    // Debug: 連線成功/失敗提示
+    client.on('connect', function() {
+      alert('已連接到 MQTT broker');
+      console.log('已連接到 MQTT broker');
+    });
+    client.on('error', function(err) {
+      alert('MQTT 連線錯誤: ' + err);
+      console.error('MQTT 連線錯誤:', err);
+    });
+    client.on('reconnect', function() {
+      console.log('正在重新連線到 MQTT broker...');
+    });
+    client.on('close', function() {
+      console.log('MQTT 連線已關閉');
+    });
+
     function sendOrder() {
       const order = {
         table: document.getElementById('table').value,
