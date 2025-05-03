@@ -51,7 +51,6 @@
       from {opacity: 0; transform: translateY(30px);}
       to {opacity: 1; transform: translateY(0);}
     }
-    /* 內頁樣式可複用你原本的 */
     label {
       display: block;
       margin-bottom: 18px;
@@ -151,7 +150,7 @@
   </div>
 
   <script>
-    // 分頁切換功能
+    // 分頁切換
     function openTab(evt, tabName) {
       var i, tabcontent, tablinks;
       tabcontent = document.getElementsByClassName("tabcontent");
@@ -166,12 +165,12 @@
       evt.currentTarget.className += " active";
     }
 
-    // MQTT連線與訂單統計邏輯（和 list.html 相同）
+    // MQTT連線與訂單統計
     const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt', {
       clientId: 'OrderBoard-' + Math.random().toString(16).substr(2, 8)
     });
 
-    // 訂單統計資料
+    // 訂單統計
     let orders = [];
     let foodStats = {};
     let tableStats = {};
