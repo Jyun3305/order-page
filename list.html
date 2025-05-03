@@ -2,38 +2,178 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>即時訂單看板</title>
+  <title>餐廳訂單統計看板</title>
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
   <style>
-    body { font-family: 'Segoe UI', '微軟正黑體', Arial, sans-serif; background: #f5f5f5; }
-    h2 { color: #ff6347; }
-    #orders { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 2px 10px #0001; max-width: 400px; margin: 30px auto;}
-    .order { border-bottom: 1px solid #eee; padding: 8px 0; }
+    body { font-family: '微軟正黑體', sans-serif; background: #f5f5f5; margin: 0; padding: 20px; }
+    .container { max-width: 1000px; margin: 0 auto; display: flex; gap: 20px; }
+    .card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); flex: 1; }
+    h2 { color: #ff6347; margin-top: 0; text-align: center; }
+    .order { border-bottom: 1px solid #eee; padding: 10px 0; }
+    .stats-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
+    .count { font-weight: bold; color: #ff6347; }
   </style>
 </head>
 <body>
-  <h2 style="text-align:center;">即時訂單看板</h2>
-  <div id="orders">等待訂單中...</div>
+  <h1 style="text-align:center;">餐廳訂單統計看板</h1>
+  
+  <div class="container">
+    <!-- 最新訂單列表 -->
+    <div class="card">
+      <h2>即時訂單列表</h2>
+      <div id="orders">等待訂單中...</div>
+    </div>
+    
+    <!-- 餐點統計 -->
+    <div class="card">
+      <h2>餐點統計</h2>
+      <div id="food-stats"></div>
+    </div>
+    
+    <!-- 桌號排隊統計 -->
+    <div class="card">
+      <h2>桌號排隊狀態</h2>
+      <div id="table-stats"></div>
+    </div>
+  </div>
+
   <script>
+    // 連接MQTT
     const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt', {
-      clientId: 'OrderBoard-' + Math.random().toString(16).substr(2, 8)
+      clientId: 'OrderStats-' + Math.random().toString(16).substr(2, 8)
     });
+    
+    // 存儲所有訂單
+    let orders = [];
+    
+    // 用於統計的對象
+    let foodStats = {}; // 記錄每種餐點的數量
+    let tableStats = {}; // 記錄每桌的訂單狀態
+    
+    // 連接成功後訂閱主題
     client.on('connect', function() {
+      console.log('已連接到MQTT broker');
       client.subscribe('restaurant/orders');
     });
+    
+    // 獲取DOM元素
     const ordersDiv = document.getElementById('orders');
-    let orders = [];
+    const foodStatsDiv = document.getElementById('food-stats');
+    const tableStatsDiv = document.getElementById('table-stats');
+    
+    // 接收訊息並處理
     client.on('message', function(topic, message) {
       try {
+        // 解析訂單JSON
         const order = JSON.parse(message.toString());
+        console.log('收到訂單:', order);
+        
+        // 添加時間戳記到訂單
+        order.timestamp = new Date().toLocaleTimeString();
+        
+        // 將訂單添加到列表
         orders.unshift(order); // 新訂單放最上面
-        ordersDiv.innerHTML = orders.slice(0, 20).map(o =>
-          `<div class="order">桌號: ${o.table} <br>餐點: ${o.food} <br>數量: ${o.quantity}</div>`
-        ).join('');
+        
+        // 更新餐點統計
+        updateFoodStats(order);
+        
+        // 更新桌號排隊統計
+        updateTableStats(order);
+        
+        // 更新UI顯示
+        updateUI();
       } catch (e) {
-        // 非JSON格式
+        console.error('訊息解析錯誤:', e);
       }
     });
+    
+    // 更新餐點統計
+    function updateFoodStats(order) {
+      const food = order.food;
+      const quantity = order.quantity || 1;
+      
+      // 如果該餐點已存在，加上數量；否則初始化
+      foodStats[food] = (foodStats[food] || 0) + quantity;
+    }
+    
+    // 更新桌號排隊統計
+    function updateTableStats(order) {
+      const table = order.table;
+      
+      // 如果該桌未記錄，初始化
+      if (!tableStats[table]) {
+        tableStats[table] = {
+          orderCount: 0,
+          lastOrderTime: null,
+          items: []
+        };
+      }
+      
+      // 更新該桌的訂單信息
+      tableStats[table].orderCount++;
+      tableStats[table].lastOrderTime = new Date().toLocaleTimeString();
+      tableStats[table].items.push({
+        food: order.food,
+        quantity: order.quantity || 1
+      });
+    }
+    
+    // 更新所有UI顯示
+    function updateUI() {
+      // 更新訂單列表
+      updateOrdersList();
+      
+      // 更新餐點統計
+      updateFoodStatsList();
+      
+      // 更新桌號統計
+      updateTableStatsList();
+    }
+    
+    // 更新訂單列表UI
+    function updateOrdersList() {
+      ordersDiv.innerHTML = orders.length > 0 ? 
+        orders.slice(0, 10).map(o => 
+          `<div class="order">
+            <div><strong>時間:</strong> ${o.timestamp}</div>
+            <div><strong>桌號:</strong> ${o.table}</div>
+            <div><strong>餐點:</strong> ${o.food}</div>
+            <div><strong>數量:</strong> ${o.quantity || 1}份</div>
+          </div>`
+        ).join('') : '等待訂單中...';
+    }
+    
+    // 更新餐點統計UI
+    function updateFoodStatsList() {
+      // 轉換為陣列並排序（由多到少）
+      const sortedFoods = Object.entries(foodStats)
+        .sort((a, b) => b[1] - a[1])
+        .map(([food, count]) => 
+          `<div class="stats-item">
+            <span>${food}</span>
+            <span class="count">${count}份</span>
+          </div>`
+        ).join('');
+      
+      foodStatsDiv.innerHTML = sortedFoods || '尚無數據';
+    }
+    
+    // 更新桌號統計UI
+    function updateTableStatsList() {
+      const tables = Object.entries(tableStats)
+        .sort((a, b) => a[0].localeCompare(b[0])) // 按桌號排序
+        .map(([table, data]) => {
+          // 計算該桌的餐點總數
+          const totalItems = data.items.reduce((sum, item) => sum + item.quantity, 0);
+          
+          return `<div class="stats-item">
+            <span>${table}號桌</span>
+            <span class="count">共${data.orderCount}筆訂單，${totalItems}份餐點</span>
+          </div>`;
+        }).join('');
+      
+      tableStatsDiv.innerHTML = tables || '尚無數據';
+    }
   </script>
 </body>
 </html>
