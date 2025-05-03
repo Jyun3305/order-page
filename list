@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>即時訂單看板</title>
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <style>
+    body { font-family: 'Segoe UI', '微軟正黑體', Arial, sans-serif; background: #f5f5f5; }
+    h2 { color: #ff6347; }
+    #orders { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 2px 10px #0001; max-width: 400px; margin: 30px auto;}
+    .order { border-bottom: 1px solid #eee; padding: 8px 0; }
+  </style>
+</head>
+<body>
+  <h2 style="text-align:center;">即時訂單看板</h2>
+  <div id="orders">等待訂單中...</div>
+  <script>
+    const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt', {
+      clientId: 'OrderBoard-' + Math.random().toString(16).substr(2, 8)
+    });
+    client.on('connect', function() {
+      client.subscribe('restaurant/orders');
+    });
+    const ordersDiv = document.getElementById('orders');
+    let orders = [];
+    client.on('message', function(topic, message) {
+      try {
+        const order = JSON.parse(message.toString());
+        orders.unshift(order); // 新訂單放最上面
+        ordersDiv.innerHTML = orders.slice(0, 20).map(o =>
+          `<div class="order">桌號: ${o.table} <br>餐點: ${o.food} <br>數量: ${o.quantity}</div>`
+        ).join('');
+      } catch (e) {
+        // 非JSON格式
+      }
+    });
+  </script>
+</body>
+</html>
