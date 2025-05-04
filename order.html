@@ -181,11 +181,39 @@
     const foodStatsDiv = document.getElementById('food-stats');
     const tableStatsDiv = document.getElementById('table-stats');
 
+    // 1. 先讀 localStorage 訂單（刷新後保留30分鐘內的）
+    function loadOrdersFromStorage() {
+      let savedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+      const now = Date.now();
+      savedOrders = savedOrders.filter(o => now - o.timestamp <= 30 * 60 * 1000);
+      orders = savedOrders;
+      // 重新統計
+      foodStats = {};
+      tableStats = {};
+      orders.forEach(order => {
+        updateFoodStats(order);
+        updateTableStats(order);
+      });
+    }
+
+    // 2. 每次收到新訂單也存到 localStorage
     client.on('message', function(topic, message) {
       try {
         const order = JSON.parse(message.toString());
-        order.timestamp = new Date().toLocaleTimeString();
-        orders.unshift(order);
+        order.timestamp = Date.now(); // 加入接收時間（毫秒）
+
+        // 先從 localStorage 取得現有訂單
+        let savedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+        // 新訂單加到最前面
+        savedOrders.unshift(order);
+        // 只保留30分鐘內的訂單
+        const now = Date.now();
+        savedOrders = savedOrders.filter(o => now - o.timestamp <= 30 * 60 * 1000);
+        // 存回 localStorage
+        localStorage.setItem('orders', JSON.stringify(savedOrders));
+
+        // 更新畫面
+        orders = savedOrders;
         updateFoodStats(order);
         updateTableStats(order);
         updateUI();
@@ -207,7 +235,7 @@
         };
       }
       tableStats[table].orderCount++;
-      tableStats[table].lastOrderTime = new Date().toLocaleTimeString();
+      tableStats[table].lastOrderTime = new Date(order.timestamp).toLocaleTimeString();
       tableStats[table].items.push({
         food: order.food,
         quantity: order.quantity || 1
@@ -222,7 +250,7 @@
       ordersDiv.innerHTML = orders.length > 0 ?
         orders.slice(0, 10).map(o =>
           `<div class="order">
-            <div><strong>時間:</strong> ${o.timestamp}</div>
+            <div><strong>時間:</strong> ${new Date(o.timestamp).toLocaleTimeString()}</div>
             <div><strong>桌號:</strong> ${o.table}</div>
             <div><strong>餐點:</strong> ${o.food}</div>
             <div><strong>數量:</strong> ${o.quantity || 1}份</div>
@@ -267,6 +295,9 @@
         document.getElementById('tableDisplay').textContent = '桌號：未指定';
         tableValue = null;
       }
+      // 載入localStorage訂單
+      loadOrdersFromStorage();
+      updateUI();
     });
 
     // 點餐送出
