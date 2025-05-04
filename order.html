@@ -58,6 +58,12 @@
       letter-spacing: 1px;
       transition: color 0.3s;
     }
+    .table-display {
+      font-size: 1.2em;
+      font-weight: bold;
+      color: #ff6347;
+      margin-bottom: 18px;
+    }
     select {
       margin-left: 10px;
       padding: 6px 10px;
@@ -107,17 +113,8 @@
   <!-- 點餐頁面 -->
   <div id="OrderTab" class="tabcontent" style="display: block;">
     <h2>線上點餐系統</h2>
+    <div id="tableDisplay" class="table-display"></div>
     <form onsubmit="sendOrder(); return false;">
-      <label>桌號:
-        <select id="table" name="table">
-          <option value="1">1號桌</option>
-          <option value="2">2號桌</option>
-          <option value="3">3號桌</option>
-          <option value="4">4號桌</option>
-          <option value="5">5號桌</option>
-        </select>
-        <input type="hidden" id="table_hidden" name="table_hidden">
-      </label>
       <label>餐點:
         <select id="food">
           <option value="雞腿飯">雞腿飯</option>
@@ -256,15 +253,27 @@
       tableStatsDiv.innerHTML = tables || '尚無數據';
     }
 
+    // 儲存桌號
+    let tableValue = null;
+
+    // 解析網址參數，自動顯示桌號
+    document.addEventListener('DOMContentLoaded', function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tableParam = urlParams.get('t');
+      if (tableParam) {
+        document.getElementById('tableDisplay').textContent = `桌號：${tableParam}號桌`;
+        tableValue = tableParam;
+      } else {
+        document.getElementById('tableDisplay').textContent = '桌號：未指定';
+        tableValue = null;
+      }
+    });
+
     // 點餐送出
     function sendOrder() {
-      // 取得桌號（鎖定時用 hidden，否則用 select）
-      let tableValue;
-      const tableSelect = document.getElementById('table');
-      if (tableSelect.disabled) {
-        tableValue = document.getElementById('table_hidden').value;
-      } else {
-        tableValue = tableSelect.value;
+      if (!tableValue) {
+        alert('未指定桌號，請掃描專屬 QR Code');
+        return;
       }
       const order = {
         table: tableValue,
@@ -274,18 +283,6 @@
       client.publish('restaurant/orders', JSON.stringify(order));
       alert('訂單已送出！');
     }
-
-    // 解析網址參數，自動選桌號並鎖定，並同步 hidden 欄位
-    document.addEventListener('DOMContentLoaded', function() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const tableParam = urlParams.get('t'); // <--- 這裡對應 QR code 參數
-      if (tableParam) {
-        const tableSelect = document.getElementById('table');
-        tableSelect.value = tableParam;
-        tableSelect.disabled = true;
-        document.getElementById('table_hidden').value = tableParam;
-      }
-    });
   </script>
 </body>
 </html>
