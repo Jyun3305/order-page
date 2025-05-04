@@ -148,7 +148,6 @@
   </div>
 
   <script>
-    // 分頁切換功能
     function openTab(evt, tabName) {
       var i, tabcontent, tablinks;
       tabcontent = document.getElementsByClassName("tabcontent");
@@ -162,13 +161,10 @@
       document.getElementById(tabName).style.display = "block";
       evt.currentTarget.className += " active";
     }
-
-    // MQTT連線與訂單統計邏輯
     const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt', {
       clientId: 'OrderBoard-' + Math.random().toString(16).substr(2, 8)
     });
 
-    // 訂單統計資料
     let orders = [];
     let foodStats = {};
     let tableStats = {};
@@ -176,18 +172,14 @@
     client.on('connect', function() {
       client.subscribe('restaurant/orders');
     });
-
     const ordersDiv = document.getElementById('orders');
     const foodStatsDiv = document.getElementById('food-stats');
     const tableStatsDiv = document.getElementById('table-stats');
-
-    // 1. 先讀 localStorage 訂單（刷新後保留30分鐘內的）
     function loadOrdersFromStorage() {
       let savedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
       const now = Date.now();
       savedOrders = savedOrders.filter(o => now - o.timestamp <= 30 * 60 * 1000);
       orders = savedOrders;
-      // 重新統計
       foodStats = {};
       tableStats = {};
       orders.forEach(order => {
@@ -195,24 +187,16 @@
         updateTableStats(order);
       });
     }
-
-    // 2. 每次收到新訂單也存到 localStorage
     client.on('message', function(topic, message) {
       try {
         const order = JSON.parse(message.toString());
-        order.timestamp = Date.now(); // 加入接收時間（毫秒）
+        order.timestamp = Date.now(); // 接收時間
 
-        // 先從 localStorage 取得現有訂單
         let savedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-        // 新訂單加到最前面
         savedOrders.unshift(order);
-        // 只保留30分鐘內的訂單
         const now = Date.now();
         savedOrders = savedOrders.filter(o => now - o.timestamp <= 30 * 60 * 1000);
-        // 存回 localStorage
         localStorage.setItem('orders', JSON.stringify(savedOrders));
-
-        // 更新畫面
         orders = savedOrders;
         updateFoodStats(order);
         updateTableStats(order);
@@ -281,10 +265,8 @@
       tableStatsDiv.innerHTML = tables || '尚無數據';
     }
 
-    // 儲存桌號
     let tableValue = null;
-
-    // 解析網址參數，自動顯示桌號
+    
     document.addEventListener('DOMContentLoaded', function() {
       const urlParams = new URLSearchParams(window.location.search);
       const tableParam = urlParams.get('t');
@@ -295,12 +277,12 @@
         document.getElementById('tableDisplay').textContent = '桌號：未指定';
         tableValue = null;
       }
-      // 載入localStorage訂單
+
       loadOrdersFromStorage();
       updateUI();
     });
 
-    // 點餐送出
+
     function sendOrder() {
       if (!tableValue) {
         alert('未指定桌號，請掃描專屬 QR Code');
