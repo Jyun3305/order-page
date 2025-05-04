@@ -278,7 +278,7 @@
     // 解析網址參數，自動選桌號並鎖定，並同步 hidden 欄位
     document.addEventListener('DOMContentLoaded', function() {
       const urlParams = new URLSearchParams(window.location.search);
-      const tableParam = urlParams.get('table');
+      const tableParam = urlParams.get('t'); // <--- 這裡對應 QR code 參數
       if (tableParam) {
         const tableSelect = document.getElementById('table');
         tableSelect.value = tableParam;
