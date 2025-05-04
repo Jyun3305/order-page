@@ -268,10 +268,10 @@
 
     // 解析網址參數，自動選桌號並鎖定
     document.addEventListener('DOMContentLoaded', function() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const tableParam = urlParams.get('table');
-      if (tableParam) {
-        const tableSelect = document.getElementById('table');
+       const urlParams = new URLSearchParams(window.location.search);
+        const tableParam = urlParams.get('t'); // 改用短參數名
+        if (tableParam) {
+          const tableSelect = document.getElementById('table');
         for (let i = 0; i < tableSelect.options.length; i++) {
           if (tableSelect.options[i].value === tableParam) {
             tableSelect.selectedIndex = i;
