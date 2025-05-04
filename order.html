@@ -150,7 +150,7 @@
   </div>
 
   <script>
-    // 分頁切換
+    // 分頁切換功能
     function openTab(evt, tabName) {
       var i, tabcontent, tablinks;
       tabcontent = document.getElementsByClassName("tabcontent");
@@ -165,12 +165,12 @@
       evt.currentTarget.className += " active";
     }
 
-    // MQTT連線與訂單統計
+    // MQTT連線與訂單統計邏輯
     const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt', {
       clientId: 'OrderBoard-' + Math.random().toString(16).substr(2, 8)
     });
 
-    // 訂單統計
+    // 訂單統計資料
     let orders = [];
     let foodStats = {};
     let tableStats = {};
@@ -265,6 +265,27 @@
       client.publish('restaurant/orders', JSON.stringify(order));
       alert('訂單已送出！');
     }
+
+    // 解析網址參數，自動選桌號並鎖定
+    document.addEventListener('DOMContentLoaded', function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tableParam = urlParams.get('table');
+      const codeParam = urlParams.get('code');
+      if (tableParam) {
+        const tableSelect = document.getElementById('table');
+        for (let i = 0; i < tableSelect.options.length; i++) {
+          if (tableSelect.options[i].value === tableParam) {
+            tableSelect.selectedIndex = i;
+            tableSelect.disabled = true; // 鎖定桌號
+            break;
+          }
+        }
+      }
+      // 可選：沒帶 code 參數時提醒
+      // if (!codeParam) {
+      //   alert('請使用專屬 QR Code 進入點餐頁面！');
+      // }
+    });
   </script>
 </body>
 </html>
