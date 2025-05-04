@@ -109,13 +109,14 @@
     <h2>線上點餐系統</h2>
     <form onsubmit="sendOrder(); return false;">
       <label>桌號:
-        <select id="table">
+        <select id="table" name="table">
           <option value="1">1號桌</option>
           <option value="2">2號桌</option>
           <option value="3">3號桌</option>
           <option value="4">4號桌</option>
           <option value="5">5號桌</option>
         </select>
+        <input type="hidden" id="table_hidden" name="table_hidden">
       </label>
       <label>餐點:
         <select id="food">
@@ -257,8 +258,16 @@
 
     // 點餐送出
     function sendOrder() {
+      // 取得桌號（鎖定時用 hidden，否則用 select）
+      let tableValue;
+      const tableSelect = document.getElementById('table');
+      if (tableSelect.disabled) {
+        tableValue = document.getElementById('table_hidden').value;
+      } else {
+        tableValue = tableSelect.value;
+      }
       const order = {
-        table: document.getElementById('table').value,
+        table: tableValue,
         food: document.getElementById('food').value,
         quantity: parseInt(document.getElementById('qty').value)
       };
@@ -266,19 +275,15 @@
       alert('訂單已送出！');
     }
 
-    // 解析網址參數，自動選桌號並鎖定
+    // 解析網址參數，自動選桌號並鎖定，並同步 hidden 欄位
     document.addEventListener('DOMContentLoaded', function() {
-       const urlParams = new URLSearchParams(window.location.search);
-        const tableParam = urlParams.get('t'); // 改用短參數名
-        if (tableParam) {
-          const tableSelect = document.getElementById('table');
-        for (let i = 0; i < tableSelect.options.length; i++) {
-          if (tableSelect.options[i].value === tableParam) {
-            tableSelect.selectedIndex = i;
-            tableSelect.disabled = true; // 鎖定桌號
-            break;
-          }
-        }
+      const urlParams = new URLSearchParams(window.location.search);
+      const tableParam = urlParams.get('table');
+      if (tableParam) {
+        const tableSelect = document.getElementById('table');
+        tableSelect.value = tableParam;
+        tableSelect.disabled = true;
+        document.getElementById('table_hidden').value = tableParam;
       }
     });
   </script>
