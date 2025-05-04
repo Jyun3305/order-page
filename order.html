@@ -270,7 +270,6 @@
     document.addEventListener('DOMContentLoaded', function() {
       const urlParams = new URLSearchParams(window.location.search);
       const tableParam = urlParams.get('table');
-      const codeParam = urlParams.get('code');
       if (tableParam) {
         const tableSelect = document.getElementById('table');
         for (let i = 0; i < tableSelect.options.length; i++) {
@@ -281,10 +280,6 @@
           }
         }
       }
-      // 可選：沒帶 code 參數時提醒
-      // if (!codeParam) {
-      //   alert('請使用專屬 QR Code 進入點餐頁面！');
-      // }
     });
   </script>
 </body>
